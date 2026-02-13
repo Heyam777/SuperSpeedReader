@@ -1,0 +1,29 @@
+{
+  "name": "superspeedreader",
+  "version": "0.1.0",
+  "description": "Electron-based accelerated reading studio with offline summaries and study aids.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electronmon .",
+    "lint": "node ./node_modules/eslint/bin/eslint.js .",
+    "format": "node ./node_modules/prettier/bin/prettier.cjs --write .",
+    "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check .",
+    "test": "node --test",
+    "ci": "npm run lint && npm run test && npm run format:check"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "pdfjs-dist": "^4.4.168"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "electron": "^31.3.0",
+    "electronmon": "^1.0.4",
+    "eslint": "^9.20.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2"
+  }
+}

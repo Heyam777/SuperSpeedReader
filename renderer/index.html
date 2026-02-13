@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SuperSpeedReader</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark">⚡️</div>
+        <div>
+          <h1>SuperSpeedReader</h1>
+          <p class="tagline">Accelerated reading studio for deep multilingual mastery</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="app-meta" id="app-meta">v0.1 · offline</div>
+        <nav class="primary-nav">
+          <button class="nav-btn active" data-view="library">Library</button>
+          <button class="nav-btn" data-view="training">Training</button>
+          <button class="nav-btn" data-view="progress">Progress</button>
+          <button class="nav-btn" data-view="settings">Settings</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="view-container">
+      <section class="view current" id="view-library">
+        <div class="layout">
+          <aside class="sidebar">
+            <section class="panel upload-panel">
+              <h2>Load document</h2>
+              <label for="file-input" class="dropzone" id="dropzone">
+                <input id="file-input" type="file" accept="application/pdf" hidden />
+                <div class="dropzone-icon">📄</div>
+                <p>Drop a PDF here or <span class="link">browse</span></p>
+                <small>All processing runs locally. No data leaves your device.</small>
+              </label>
+              <div class="stack mt-3">
+                <label class="field">
+                  <span>Document language</span>
+                  <select id="reading-language">
+                    <option value="en">English</option>
+                    <option value="pl">Polski</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Interface language</span>
+                  <select id="interface-language">
+                    <option value="en">English</option>
+                    <option value="pl">Polski</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Target pace</span>
+                  <input type="range" min="200" max="900" step="10" id="target-wpm" />
+                  <small><span id="target-wpm-value">320</span> WPM</small>
+                </label>
+              </div>
+            </section>
+
+            <section class="panel mode-panel">
+              <div class="panel-header">
+                <h2>Reading modes</h2>
+                <button class="ghost-btn" id="mode-reset">Reset</button>
+              </div>
+              <div class="mode-toggle">
+                <label>
+                  <input type="checkbox" id="mode-chunk" />
+                  <span>Chunk highlighting</span>
+                </label>
+                <label>
+                  <input type="checkbox" id="mode-guided" />
+                  <span>Guided pointer</span>
+                </label>
+                <label>
+                  <input type="checkbox" id="mode-tunnel" />
+                  <span>Tunnel focus</span>
+                </label>
+                <label>
+                  <input type="checkbox" id="mode-rsvp" />
+                  <span>RSVP sprint</span>
+                </label>
+              </div>
+              <label class="field">
+                <span>Chunk size (words)</span>
+                <input type="range" min="2" max="6" step="1" id="chunk-size" />
+                <small><span id="chunk-size-value">3</span> words</small>
+              </label>
+              <label class="field">
+                <span>Pointer cadence (lines/min)</span>
+                <input type="range" min="60" max="360" step="10" id="guided-cadence" />
+                <small><span id="guided-cadence-value">180</span></small>
+              </label>
+              <label class="field">
+                <span>Tunnel window</span>
+                <input type="range" min="8" max="32" step="1" id="tunnel-width" />
+                <small><span id="tunnel-width-value">22</span> rem</small>
+              </label>
+            </section>
+
+            <section class="panel library-panel">
+              <div class="panel-header">
+                <h2>Recent library</h2>
+                <span class="badge" id="library-count">0</span>
+              </div>
+              <ul id="library-list" class="library-list">
+                <li class="empty">Drop your first PDF to build a library.</li>
+              </ul>
+            </section>
+
+            <section class="panel vocab-panel">
+              <div class="panel-header">
+                <h2>Vocabulary deck</h2>
+                <button class="ghost-btn" id="export-vocab">Export</button>
+              </div>
+              <ul class="vocab-list" id="vocab-list">
+                <li class="empty">Double-click a word in the reader to save it.</li>
+              </ul>
+            </section>
+
+            <section class="panel insights-panel">
+              <h2>Quick stats</h2>
+              <dl class="insight-grid" id="insights"></dl>
+            </section>
+          </aside>
+
+          <main class="content">
+            <nav class="tab-bar" id="tab-bar" hidden></nav>
+            <section class="panel hero" id="welcome-panel">
+              <h2>Ready to sprint through complex material</h2>
+              <p>
+                SuperSpeedReader extracts text from PDFs locally, builds smart summaries, generates
+                application prompts, and activates focus modes designed for fast yet deep
+                comprehension. Load a document to get started.
+              </p>
+              <ul class="feature-list">
+                <li>AI-inspired summaries without needing an internet connection.</li>
+                <li>Automatic learning prompts and spaced-repetition ready flashcards.</li>
+                <li>
+                  Focus modes including RSVP, meta-guiding, tunnel vision, and tachistoscope drills.
+                </li>
+                <li>Persistent multilingual library with vocabulary capture and analytics.</li>
+              </ul>
+            </section>
+
+            <section class="panel" id="session-panel" hidden>
+              <header class="panel-header">
+                <div>
+                  <h2>Reading session</h2>
+                  <p class="muted" id="session-status">No active session</p>
+                </div>
+                <div class="pill-group">
+                  <button class="pill-btn" id="start-session">Begin session</button>
+                  <button class="pill-btn" id="end-session" disabled>End session</button>
+                  <button class="pill-btn" id="launch-rsvp">Open RSVP sprint</button>
+                </div>
+              </header>
+              <div class="session-metrics">
+                <div>
+                  <span class="metric-label">Current pace</span>
+                  <strong id="live-wpm">0 WPM</strong>
+                </div>
+                <div>
+                  <span class="metric-label">Session time</span>
+                  <strong id="live-duration">00:00</strong>
+                </div>
+                <div>
+                  <span class="metric-label">Completed drills</span>
+                  <strong id="live-drills">0</strong>
+                </div>
+              </div>
+              <div class="tts-controls">
+                <label class="field">
+                  <span>Voice</span>
+                  <select id="tts-voice">
+                    <option value="alloy">Alloy · EN</option>
+                    <option value="verse">Verse · EN</option>
+                    <option value="aria">Aria · EN/PL</option>
+                    <option value="sol">Sol · EN</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Source</span>
+                  <select id="tts-source">
+                    <option value="summary">Executive summary</option>
+                    <option value="preview">Document preview</option>
+                    <option value="selection">Current selection</option>
+                    <option value="full">Full document (first 4k chars)</option>
+                  </select>
+                </label>
+                <div class="tts-actions">
+                  <button class="pill-btn" id="tts-play">Read aloud</button>
+                  <button class="pill-btn" id="tts-stop" disabled>Stop</button>
+                </div>
+              </div>
+              <div class="quiz" id="comprehension-quiz" hidden>
+                <h3>Comprehension check</h3>
+                <p id="quiz-question"></p>
+                <textarea
+                  id="quiz-response"
+                  rows="3"
+                  placeholder="Summarise or answer..."
+                ></textarea>
+                <button class="ghost-btn" id="submit-quiz">Submit response</button>
+              </div>
+            </section>
+
+            <section class="panel" id="overview-panel" hidden>
+              <header class="panel-header">
+                <div>
+                  <h2 id="doc-title">Untitled document</h2>
+                  <p id="doc-subtitle" class="muted"></p>
+                </div>
+                <div class="pill-group">
+                  <span class="pill" id="pill-pages">0 pages</span>
+                  <span class="pill" id="pill-words">0 words</span>
+                  <span class="pill" id="pill-time">0 min read</span>
+                </div>
+              </header>
+              <article
+                id="reader-article"
+                class="reader-article"
+                aria-label="Active document"
+              ></article>
+            </section>
+
+            <section class="panel" id="summary-panel" hidden>
+              <header class="panel-header">
+                <h2>Executive summary</h2>
+                <button class="ghost-btn" id="refresh-summary">Regenerate</button>
+              </header>
+              <div id="summary-content" class="summary"></div>
+              <div id="key-takeaways" class="pill-cloud"></div>
+            </section>
+
+            <section class="panel" id="prompts-panel" hidden>
+              <header class="panel-header">
+                <h2>Application prompts &amp; flashcards</h2>
+                <div class="pill-group">
+                  <span class="pill">Actionable practice</span>
+                  <span class="pill">Recall boosters</span>
+                </div>
+              </header>
+              <div class="split-grid">
+                <div>
+                  <h3>Project prompts</h3>
+                  <ol id="prompt-list" class="prompt-list"></ol>
+                </div>
+                <div>
+                  <h3>Flashcard starters</h3>
+                  <ul id="flashcard-list" class="flashcard-list"></ul>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" id="focus-panel" hidden>
+              <header class="panel-header">
+                <h2>Focus playground</h2>
+                <div class="pill-group">
+                  <button class="pill-btn" data-mode="bionic">Bionic</button>
+                  <button class="pill-btn" data-mode="chunk">Tempo chunks</button>
+                  <button class="pill-btn" data-mode="contrast">High contrast</button>
+                  <button class="pill-btn" data-mode="peripheral">Peripheral drill</button>
+                </div>
+              </header>
+              <div id="focus-output" class="focus-output"></div>
+            </section>
+
+            <section class="panel" id="notes-panel" hidden>
+              <header class="panel-header">
+                <h2>Smart study itinerary</h2>
+                <button class="ghost-btn" id="export-plan">Copy study plan</button>
+              </header>
+              <div id="study-plan" class="study-plan"></div>
+            </section>
+          </main>
+        </div>
+      </section>
+
+      <section class="view" id="view-training" hidden>
+        <div class="training-intro">
+          <h2>Technique studio</h2>
+          <p class="muted">
+            Blend historical drills with modern neuroscience to expand your reading toolkit.
+          </p>
+        </div>
+        <div class="training-grid">
+          <article class="panel training-card" data-drill="tachistoscope">
+            <h3>Tachistoscope flash</h3>
+            <p>
+              Flash phrases for milliseconds to widen recognition span, inspired by WWII pilot
+              training.
+            </p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+          <article class="panel training-card" data-drill="peripheral">
+            <h3>Peripheral expansion</h3>
+            <p>
+              Catch words appearing in your side vision to stretch fixation width and reduce eye
+              stops.
+            </p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+          <article class="panel training-card" data-drill="meta-guiding">
+            <h3>Meta-guiding coach</h3>
+            <p>
+              Practice classic Evelyn Wood hand pacing with adaptive cadences and regression
+              blocking.
+            </p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+          <article class="panel training-card" data-drill="sound-pacer">
+            <h3>Metronome pacing</h3>
+            <p>Synchronise with auditory cues to internalise rhythm and sustain concentration.</p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+          <article class="panel training-card" data-drill="visual-sweep">
+            <h3>Visual sweep</h3>
+            <p>
+              Follow serpentine sweeps down the page to train wide saccades and minimise
+              regressions.
+            </p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+          <article class="panel training-card" data-drill="anchoring">
+            <h3>Fixation anchoring</h3>
+            <p>Hit strategic anchors per line to rely on peripheral vision and cut eye stops.</p>
+            <button class="pill-btn start-drill">Launch drill</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-progress" hidden>
+        <div class="progress-layout">
+          <article class="panel progress-panel">
+            <h2>Velocity &amp; comprehension</h2>
+            <div class="stat-cards" id="speed-stats"></div>
+            <div class="chart" id="speed-chart" aria-label="Speed chart"></div>
+          </article>
+          <article class="panel progress-panel">
+            <h2>Comprehension quality</h2>
+            <div class="chart" id="comprehension-chart"></div>
+            <div class="study-notes" id="reflection-log"></div>
+          </article>
+          <article class="panel progress-panel">
+            <h2>Session log</h2>
+            <table class="session-table" aria-label="Session history">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Document</th>
+                  <th>Mode</th>
+                  <th>WPM</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody id="session-table-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings" hidden>
+        <article class="panel settings-panel">
+          <h2>Personalisation</h2>
+          <form id="settings-form" class="settings-form">
+            <label class="field">
+              <span>Daily focus goal (minutes)</span>
+              <input type="number" id="goal-minutes" min="5" max="240" step="5" />
+            </label>
+            <label class="field">
+              <span>Preferred content topics</span>
+              <input type="text" id="preferred-topics" placeholder="science, design, philosophy" />
+            </label>
+            <label class="field">
+              <span>Enable comprehension reminders</span>
+              <input type="checkbox" id="remind-comprehension" />
+            </label>
+            <label class="field">
+              <span>Enable telemetry sync with Super Thinking cloud</span>
+              <input type="checkbox" id="cloud-sync" />
+            </label>
+            <button class="pill-btn" type="submit">Save preferences</button>
+          </form>
+        </article>
+        <article class="panel settings-panel">
+          <h2>Integrations</h2>
+          <div class="integration-grid">
+            <div>
+              <h3>Memory module</h3>
+              <p>Send extracted knowledge cards to the Super Thinking memory trainer.</p>
+              <button class="ghost-btn" id="toggle-memory-sync">Enable</button>
+            </div>
+            <div>
+              <h3>Emotion analysis</h3>
+              <p>Blend mood tracking with reading focus to discover ideal reading windows.</p>
+              <button class="ghost-btn" id="toggle-emotion-sync">Enable</button>
+            </div>
+            <div>
+              <h3>Concept mapping</h3>
+              <p>Push key ideas into the knowledge graph to connect across disciplines.</p>
+              <button class="ghost-btn" id="toggle-concept-sync">Enable</button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <div id="rsvp-layer" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="rsvp-card">
+        <header>
+          <h2>RSVP sprint</h2>
+          <button class="ghost-btn" id="close-rsvp">×</button>
+        </header>
+        <div class="rsvp-word" id="rsvp-word">Ready?</div>
+        <div class="rsvp-controls">
+          <label>
+            <span>Speed</span>
+            <input type="range" min="200" max="1000" step="10" id="rsvp-speed" />
+            <small><span id="rsvp-speed-value">320</span> WPM</small>
+          </label>
+          <div class="rsvp-buttons">
+            <button class="pill-btn" id="rsvp-play">Start</button>
+            <button class="pill-btn" id="rsvp-rewind">Rewind</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tunnel-overlay" class="overlay hidden" aria-hidden="true"></div>
+    <div id="guided-pointer" class="guided-pointer hidden" aria-hidden="true"></div>
+
+    <div id="drill-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="drill-card">
+        <header>
+          <h2 id="drill-title">Drill</h2>
+          <button class="ghost-btn" id="close-drill">×</button>
+        </header>
+        <div class="drill-display" id="drill-display">Press start to begin</div>
+        <div class="drill-controls">
+          <button class="pill-btn" id="drill-start">Start</button>
+          <button class="pill-btn" id="drill-stop" disabled>Stop</button>
+          <div class="drill-stats">
+            <span>Correct: <strong id="drill-correct">0</strong></span>
+            <span>Attempts: <strong id="drill-attempts">0</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="session-summary" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="summary-card">
+        <header>
+          <h2>Session summary</h2>
+          <button class="ghost-btn" id="close-session-summary">×</button>
+        </header>
+        <div id="session-summary-body" class="summary-body"></div>
+        <button class="pill-btn" id="ack-session-summary">Great!</button>
+      </div>
+    </div>
+
+    <template id="library-item-template">
+      <li class="library-item">
+        <button class="library-button">
+          <div class="library-title"></div>
+          <div class="library-meta"></div>
+        </button>
+      </li>
+    </template>
+
+    <audio id="tts-player" hidden></audio>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
