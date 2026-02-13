@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
+import { sanitizeTtsPayload, validateLibraryItem, validatePdfFilePath } from './ipc-validation.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,9 +83,10 @@ ipcMain.handle('library:load', async () => {
 });
 
 ipcMain.handle('library:save', async (_event, item) => {
+  const validatedItem = validateLibraryItem(item);
   const library = await readLibrary();
-  const filtered = library.filter((entry) => entry.id !== item.id);
-  filtered.unshift({ ...item, updatedAt: Date.now() });
+  const filtered = library.filter((entry) => entry.id !== validatedItem.id);
+  filtered.unshift({ ...validatedItem, updatedAt: Date.now() });
   const trimmed = filtered.slice(0, 12);
   await writeLibrary(trimmed);
   return trimmed;
@@ -100,14 +102,7 @@ ipcMain.handle('tts:speak', async (_event, payload) => {
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY environment variable is not set.');
   }
-  if (!payload?.text || typeof payload.text !== 'string') {
-    throw new Error('Missing text to synthesise.');
-  }
-  const trimmed = payload.text.trim().replace(/\s+/g, ' ');
-  const safeText = trimmed.slice(0, 4000);
-  const voice = payload.voice || 'alloy';
-  const format = payload.format || 'mp3';
-  const language = payload.language || 'en';
+  const { text, voice, format, language } = sanitizeTtsPayload(payload);
   const filePath = path.join(app.getPath('userData'), `tts-${Date.now()}.${format}`);
 
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -118,7 +113,7 @@ ipcMain.handle('tts:speak', async (_event, payload) => {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini-tts',
-      input: safeText,
+      input: text,
       voice,
       format,
       language,
@@ -137,9 +132,11 @@ ipcMain.handle('tts:speak', async (_event, payload) => {
 });
 
 ipcMain.handle('fs:readFile', async (_event, filePath) => {
-  if (!filePath) {
-    throw new Error('No file path supplied.');
+  const safePath = validatePdfFilePath(filePath);
+  const stats = await fs.stat(safePath);
+  if (stats.size > 100 * 1024 * 1024) {
+    throw new Error('PDF is too large. Maximum supported size is 100MB.');
   }
-  const data = await fs.readFile(filePath);
+  const data = await fs.readFile(safePath);
   return Array.from(data);
 });

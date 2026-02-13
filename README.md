@@ -40,6 +40,7 @@ Run `npm run ci` to execute all three checks in the same order as CI.
 
 ```
 SuperSpeedReader/
+├── ipc-validation.js # Shared validation for Electron IPC payloads
 ├── main.js          # Electron main process and library persistence
 ├── preload.js       # Secure bridge exposing minimal IPC surface
 ├── renderer/
